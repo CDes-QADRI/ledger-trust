@@ -1,65 +1,332 @@
-import Image from "next/image";
+"use client";
+
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import {
+  useAccount,
+  useReadContract,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+} from "wagmi";
+import { CONTRACT_ABI, CONTRACT_ADDRESS, SUPPORTED_CHAIN } from "../lib/contract";
+import { uploadToIPFS } from "../lib/pinata";
+import { useState, useRef, useEffect } from "react";
 
 export default function Home() {
+  const { address, isConnected } = useAccount();
+
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [formSuccess, setFormSuccess] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const { data: expenseCount, refetch: refetchCount } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
+    functionName: "expenseCount",
+    chainId: SUPPORTED_CHAIN.id,
+  });
+
+  const { data: isCommitteeMember } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
+    functionName: "isCommitteeMember",
+    args: address ? [address] : undefined,
+    chainId: SUPPORTED_CHAIN.id,
+    query: { enabled: !!address },
+  });
+
+  const {
+    writeContract: submitExpense,
+    data: submitTxHash,
+    isPending: isSubmitting,
+    reset: resetSubmit,
+  } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({ hash: submitTxHash });
+
+  useEffect(() => {
+    if (isConfirmed) {
+      refetchCount();
+      setFormSuccess(true);
+      resetSubmit();
+    }
+  }, [isConfirmed, refetchCount, resetSubmit]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError("");
+    setFormSuccess(false);
+
+    if (!description.trim()) return setFormError("Description is required.");
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0)
+      return setFormError("Enter a valid amount in Rs.");
+    if (!file) return setFormError("Please attach a receipt image or PDF.");
+
+    try {
+      setUploading(true);
+      const ipfsHash = await uploadToIPFS(file);
+      setUploading(false);
+
+      submitExpense({
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: "submitExpense",
+        args: [description.trim(), BigInt(Math.round(Number(amount))), ipfsHash],
+        chainId: SUPPORTED_CHAIN.id,
+      });
+
+      setDescription("");
+      setAmount("");
+      setFile(null);
+      if (fileRef.current) fileRef.current.value = "";
+    } catch (err: unknown) {
+      setUploading(false);
+      setFormError(err instanceof Error ? err.message : "Upload failed.");
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Party Expense Tracker</h1>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Blockchain-verified · Zero corruption · Ethereum Sepolia
+            </p>
+          </div>
+          <ConnectButton />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+        {!isConnected && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+            <p className="text-blue-800 font-medium">
+              Connect your wallet to submit or view expenses.
+            </p>
+          </div>
+        )}
+
+        {isConnected && (
+          <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+              Submit New Expense
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <input
+                  type="text"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="e.g. Catering advance payment"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  maxLength={200}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Amount (Rs)
+                </label>
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="e.g. 50000"
+                  min="1"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Receipt (Image / PDF — max 5MB)
+                </label>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
+                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm file:mr-3 file:border-0 file:bg-blue-50 file:text-blue-700 file:rounded file:px-3 file:py-1"
+                />
+              </div>
+              {formError && (
+                <p className="text-sm text-red-600">{formError}</p>
+              )}
+              {formSuccess && (
+                <p className="text-sm text-green-600">
+                  Expense submitted successfully on-chain!
+                </p>
+              )}
+              <button
+                type="submit"
+                disabled={uploading || isSubmitting || isConfirming}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+              >
+                {uploading
+                  ? "Uploading receipt to IPFS..."
+                  : isSubmitting
+                  ? "Confirm in wallet..."
+                  : isConfirming
+                  ? "Waiting for confirmation..."
+                  : "Submit Expense"}
+              </button>
+            </form>
+          </section>
+        )}
+
+        <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">All Expenses</h2>
+            <span className="text-sm text-gray-500">
+              Total: {expenseCount?.toString() ?? "0"}
+            </span>
+          </div>
+          {!expenseCount || expenseCount === BigInt(0) ? (
+            <p className="text-sm text-gray-500 text-center py-8">
+              No expenses submitted yet.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {Array.from({ length: Number(expenseCount) }, (_, i) => i + 1).map(
+                (id) => (
+                  <ExpenseRow
+                    key={id}
+                    expenseId={id}
+                    isCommitteeMember={!!isCommitteeMember}
+                    walletAddress={address}
+                    onRefresh={refetchCount}
+                  />
+                )
+              )}
+            </div>
+          )}
+        </section>
       </main>
+    </div>
+  );
+}
+
+function ExpenseRow({
+  expenseId,
+  isCommitteeMember,
+  walletAddress,
+  onRefresh,
+}: {
+  expenseId: number;
+  isCommitteeMember: boolean;
+  walletAddress?: string;
+  onRefresh: () => void;
+}) {
+  const { data: expense, refetch: refetchExpense } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
+    functionName: "expenses",
+    args: [BigInt(expenseId)],
+    chainId: SUPPORTED_CHAIN.id,
+  });
+
+  const { data: alreadyApproved } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
+    functionName: "hasApproved",
+    args: walletAddress
+      ? [BigInt(expenseId), walletAddress as `0x${string}`]
+      : undefined,
+    chainId: SUPPORTED_CHAIN.id,
+    query: { enabled: !!walletAddress },
+  });
+
+  const {
+    writeContract: approveExpense,
+    data: approveTxHash,
+    isPending: isApproving,
+  } = useWriteContract();
+
+  const { isSuccess: approveConfirmed } = useWaitForTransactionReceipt({
+    hash: approveTxHash,
+  });
+
+  useEffect(() => {
+    if (approveConfirmed) {
+      refetchExpense();
+      onRefresh();
+    }
+  }, [approveConfirmed, refetchExpense, onRefresh]);
+
+  if (!expense) return null;
+
+  const [description, amount, ipfsReceiptHash, approvals, isSettled] = expense;
+
+  return (
+    <div
+      className={`border rounded-lg p-4 ${
+        isSettled ? "border-green-200 bg-green-50" : "border-gray-200"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-medium text-gray-900 text-sm">#{expenseId}</span>
+            <span className="text-gray-800 text-sm">{description}</span>
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                isSettled
+                  ? "bg-green-100 text-green-700"
+                  : "bg-yellow-100 text-yellow-700"
+              }`}
+            >
+              {isSettled ? "Settled ✓" : "Pending"}
+            </span>
+          </div>
+          <div className="mt-1 flex items-center gap-4 flex-wrap">
+            <span className="text-sm font-semibold text-gray-700">
+              Rs. {amount.toString()}
+            </span>
+            <span className="text-xs text-gray-500">
+              {approvals.toString()} approval(s)
+            </span>
+            {ipfsReceiptHash && (
+              <a
+                href={`https://gateway.pinata.cloud/ipfs/${ipfsReceiptHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:underline"
+              >
+                View Receipt ↗
+              </a>
+            )}
+          </div>
+        </div>
+        {isCommitteeMember && !isSettled && !alreadyApproved && (
+          <button
+            onClick={() =>
+              approveExpense({
+                address: CONTRACT_ADDRESS,
+                abi: CONTRACT_ABI,
+                functionName: "approveExpense",
+                args: [BigInt(expenseId)],
+                chainId: SUPPORTED_CHAIN.id,
+              })
+            }
+            disabled={isApproving}
+            className="shrink-0 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+          >
+            {isApproving ? "Approving..." : "Approve"}
+          </button>
+        )}
+        {alreadyApproved && !isSettled && (
+          <span className="shrink-0 text-xs text-gray-400 italic">
+            You approved
+          </span>
+        )}
+      </div>
     </div>
   );
 }
