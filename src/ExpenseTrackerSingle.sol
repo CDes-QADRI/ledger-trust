@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 /// @title ExpenseTrackerSingle
 /// @notice Single-approver version of ExpenseTracker used for development and testing.
+///         Target network: Ethereum Sepolia testnet (chainId: 11155111).
 ///         Deploy this when you only have one wallet address available.
 ///         Identical function signatures and events — fully ABI-compatible with the
 ///         multi-member contract so the frontend does NOT need any changes.
