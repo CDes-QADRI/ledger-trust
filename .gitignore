@@ -12,3 +12,5 @@ docs/
 
 # Dotenv file
 .env
+src/ExpenseTrackerSinle.sol
+test/ExpenseTrackerSingle.t.sol
