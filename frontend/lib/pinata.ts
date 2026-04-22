@@ -1,14 +1,29 @@
-import axios from 'axios';
+export const uploadToIPFS = async (file: File): Promise<string> => {
+  // File type validation (client-side defence-in-depth)
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"];
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    throw new Error("Invalid file type. Only images and PDF are allowed.");
+  }
 
-export const uploadToIPFS = async (file: File) => {
+  // File size validation: max 5MB
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error("File too large. Maximum size is 5MB.");
+  }
+
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await axios.post("https://api.pinata.cloud/pinning/pinFileToIPFS", formData, {
-    headers: {
-      Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
-    },
+  // Call our own secure server-side API route — JWT never touches the browser
+  const res = await fetch("/api/upload-receipt", {
+    method: "POST",
+    body: formData,
   });
-  
-  return res.data.IpfsHash; // Ye wo CID hai jo hum blockchain par store karein ge [cite: 97, 98]
+
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error ?? "Failed to upload receipt.");
+  }
+
+  const data = await res.json();
+  return data.ipfsHash; // IPFS CID — store this on blockchain
 };
