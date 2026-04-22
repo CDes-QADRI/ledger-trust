@@ -24,6 +24,8 @@ contract ExpenseTracker {
         require(_requiredApprovals <= _committee.length, "Invalid required approvals");
 
         for (uint256 i = 0; i < _committee.length; i++) {
+            require(_committee[i] != address(0), "Invalid committee member");
+            require(!isCommitteeMember[_committee[i]], "Duplicate committee member");
             isCommitteeMember[_committee[i]] = true;
         }
         requiredApprovals = _requiredApprovals;
