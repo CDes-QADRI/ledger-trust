@@ -5,11 +5,17 @@ import {Test} from "forge-std/Test.sol";
 import {ExpenseTrackerSingle} from "../src/ExpenseTrackerSingle.sol";
 
 contract ExpenseTrackerSingleTest is Test {
+    // Target network: Ethereum Sepolia (chainId: 11155111)
+    // Previously configured for Base Sepolia (chainId: 84532)
+    uint256 constant ETH_SEPOLIA_CHAIN_ID = 11155111;
+
     ExpenseTrackerSingle tracker;
     address approver = address(1);
     address nonApprover = address(2);
 
     function setUp() public {
+        // Simulate Ethereum Sepolia environment for all tests
+        vm.chainId(ETH_SEPOLIA_CHAIN_ID);
         tracker = new ExpenseTrackerSingle(approver);
     }
 
