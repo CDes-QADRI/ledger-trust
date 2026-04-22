@@ -19,6 +19,10 @@ contract ExpenseTracker {
 
     uint256 public requiredApprovals;
 
+    event ExpenseSubmitted(uint256 indexed expenseId, address indexed submitter, uint256 amount);
+    event ExpenseApproved(uint256 indexed expenseId, address indexed approver, uint256 approvals);
+    event ExpenseSettled(uint256 indexed expenseId);
+
     constructor(address[] memory _committee, uint256 _requiredApprovals) {
         require(_committee.length > 0, "Committee required");
         require(_requiredApprovals > 0, "Required approvals must be > 0");
@@ -42,6 +46,7 @@ contract ExpenseTracker {
             isSettled: false,
             submitter: msg.sender
         });
+        emit ExpenseSubmitted(expenseCount, msg.sender, _amount);
     }
 
     function approveExpense(uint256 _expenseId) public {
@@ -54,9 +59,11 @@ contract ExpenseTracker {
 
         hasApproved[_expenseId][msg.sender] = true;
         expense.approvals++;
+        emit ExpenseApproved(_expenseId, msg.sender, expense.approvals);
 
         if (expense.approvals >= requiredApprovals) {
             expense.isSettled = true;
+            emit ExpenseSettled(_expenseId);
         }
     }
 }
