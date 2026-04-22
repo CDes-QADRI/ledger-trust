@@ -44,7 +44,7 @@ contract ExpenseTracker {
     function approveExpense(uint256 _expenseId) public {
         require(isCommitteeMember[msg.sender] == true, "Only committee can approve");
         require(_expenseId > 0 && _expenseId <= expenseCount, "Invalid expense ID");
-        
+
         Expense storage expense = expenses[_expenseId];
         require(expense.isSettled == false, "Expense already settled");
         require(hasApproved[_expenseId][msg.sender] == false, "You already approved this");

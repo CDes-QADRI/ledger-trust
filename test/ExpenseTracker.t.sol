@@ -16,10 +16,10 @@ contract ExpenseTrackerTest is Test {
 
     function testSubmitAndApprove() public {
         tracker.submitExpense("Food", 100, "Qm123");
-        
+
         vm.prank(committee1);
         tracker.approveExpense(1);
-        
+
         (,,,, bool isSettled,) = tracker.expenses(1);
         assertTrue(isSettled);
     }
