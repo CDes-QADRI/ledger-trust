@@ -6,7 +6,7 @@ contract ExpenseTracker {
         string description;
         uint256 amount;
         string ipfsReceiptHash;
-        uint8 approvals;
+        uint256 approvals;
         bool isSettled;
         address submitter;
     }
@@ -17,9 +17,9 @@ contract ExpenseTracker {
     mapping(address => bool) public isCommitteeMember;
     mapping(uint256 => mapping(address => bool)) public hasApproved;
 
-    uint8 public requiredApprovals;
+    uint256 public requiredApprovals;
 
-    constructor(address[] memory _committee, uint8 _requiredApprovals) {
+    constructor(address[] memory _committee, uint256 _requiredApprovals) {
         require(_committee.length > 0, "Committee required");
         require(_requiredApprovals > 0, "Required approvals must be > 0");
         require(_requiredApprovals <= _committee.length, "Invalid required approvals");
