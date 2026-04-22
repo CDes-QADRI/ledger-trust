@@ -21,6 +21,7 @@ contract ExpenseTracker {
 
     constructor(address[] memory _committee, uint8 _requiredApprovals) {
         require(_committee.length > 0, "Committee required");
+        require(_requiredApprovals > 0, "Required approvals must be > 0");
         require(_requiredApprovals <= _committee.length, "Invalid required approvals");
 
         for (uint256 i = 0; i < _committee.length; i++) {
