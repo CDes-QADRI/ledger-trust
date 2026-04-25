@@ -154,6 +154,8 @@ contract ExpenseTracker {
 
     /// @notice Internal helper to add a committee member.
     function _addCommitteeMember(address _member) internal {
+        require(_member != address(0), "Invalid address");
+        require(!isCommitteeMember[_member], "Already a member");
         isCommitteeMember[_member] = true;
         committeeMembers.push(_member);
         emit CommitteeMemberAdded(_member);
