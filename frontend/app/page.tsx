@@ -3,16 +3,25 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import {
   useAccount,
+  useChainId,
+  useBalance,
+  useSwitchChain,
   useReadContract,
   useWriteContract,
   useWaitForTransactionReceipt,
 } from "wagmi";
+import { formatEther } from "viem";
 import { CONTRACT_ABI, CONTRACT_ADDRESS, SUPPORTED_CHAIN } from "../lib/contract";
 import { uploadToIPFS } from "../lib/pinata";
+import { useTheme } from "../lib/theme";
 import { useState, useRef, useEffect } from "react";
 
 export default function Home() {
   const { address, isConnected } = useAccount();
+  const chainId = useChainId();
+  const { data: ethBalance } = useBalance({ address });
+  const { switchChain } = useSwitchChain();
+  const { resolved: themeResolved, toggle: toggleTheme } = useTheme();
 
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -21,6 +30,8 @@ export default function Home() {
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const isWrongNetwork = isConnected && chainId !== SUPPORTED_CHAIN.id;
 
   const { data: expenseCount, refetch: refetchCount } = useReadContract({
     address: CONTRACT_ADDRESS,
@@ -90,16 +101,56 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors">
+      {/* ── Network Switch Warning ── */}
+      {isWrongNetwork && (
+        <div className="bg-amber-50 dark:bg-amber-950 border-b border-amber-300 dark:border-amber-700 px-4 py-3">
+          <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+              ⚠️ Please switch to Sepolia network to use this dApp.
+            </p>
+            <button
+              onClick={() => switchChain({ chainId: SUPPORTED_CHAIN.id })}
+              className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors"
+            >
+              Switch to Sepolia
+            </button>
+          </div>
+        </div>
+      )}
+
+      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Party Expense Tracker</h1>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+              Party Expense Tracker
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               Blockchain-verified · Zero corruption · Ethereum Sepolia
             </p>
           </div>
-          <ConnectButton />
+
+          <div className="flex items-center gap-3">
+            {/* ── ETH Balance ── */}
+            {isConnected && ethBalance && (
+              <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-mono font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-full">
+                <span className="w-2 h-2 rounded-full bg-green-400" />
+                {formatEther(ethBalance.value).slice(0, 6)}{" "}
+                {ethBalance.symbol}
+              </span>
+            )}
+
+            {/* ── Theme Toggle ── */}
+            <button
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              className="text-sm px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              {themeResolved === "dark" ? "☀️ Light" : "🌙 Dark"}
+            </button>
+
+            <ConnectButton />
+          </div>
         </div>
       </header>
 

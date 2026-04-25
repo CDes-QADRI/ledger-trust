@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { ReactNode } from "react";
+import { ThemeProvider } from "../lib/theme";
 
 // dynamic with ssr:false is only allowed in Client Components
 const ProvidersNoSSR = dynamic(
@@ -10,5 +11,9 @@ const ProvidersNoSSR = dynamic(
 );
 
 export function ClientProviders({ children }: { children: ReactNode }) {
-  return <ProvidersNoSSR>{children}</ProvidersNoSSR>;
+  return (
+    <ThemeProvider>
+      <ProvidersNoSSR>{children}</ProvidersNoSSR>
+    </ThemeProvider>
+  );
 }
