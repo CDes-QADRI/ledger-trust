@@ -19,8 +19,8 @@ import { useState, useRef, useEffect } from "react";
 export default function Home() {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
-  const { data: ethBalance } = useBalance({ address });
-  const { switchChain } = useSwitchChain();
+  const { data: ethBalance } = useBalance({ address, chainId: SUPPORTED_CHAIN.id });
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
   const { resolved: themeResolved, toggle: toggleTheme } = useTheme();
 
   const [description, setDescription] = useState("");
@@ -111,9 +111,10 @@ export default function Home() {
             </p>
             <button
               onClick={() => switchChain({ chainId: SUPPORTED_CHAIN.id })}
-              className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors"
+              disabled={isSwitching}
+              className="shrink-0 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors"
             >
-              Switch to Sepolia
+              {isSwitching ? "Switching..." : "Switch to Sepolia"}
             </button>
           </div>
         </div>
