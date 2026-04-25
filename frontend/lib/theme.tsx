@@ -25,67 +25,71 @@ const ThemeContext = createContext<ThemeContextValue>({
   toggle: () => {},
 });
 
-function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "system";
-  const saved = localStorage.getItem("theme") as Theme | null;
-  if (saved === "light" || saved === "dark" || saved === "system") return saved;
-  return "system";
+function applyThemeClass(r: "light" | "dark") {
+  const root = document.documentElement;
+  root.classList.remove("light", "dark");
+  root.classList.add(r);
 }
 
-function getInitialResolved(): "light" | "dark" {
-  if (typeof window === "undefined") return "light";
-  const saved = localStorage.getItem("theme") as Theme | null;
-  if (saved === "dark") return "dark";
-  if (saved === "light") return "light";
+function resolveTheme(theme: Theme): "light" | "dark" {
+  if (theme === "dark") return "dark";
+  if (theme === "light") return "light";
+  // system
   return window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
 }
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
-  const [resolved, setResolved] = useState<"light" | "dark">(getInitialResolved);
-  const [mounted, setMounted] = useState(false);
+function readStorage(): Theme {
+  try {
+    const saved = localStorage.getItem("theme") as Theme | null;
+    if (saved === "light" || saved === "dark" || saved === "system") return saved;
+  } catch {}
+  return "system";
+}
 
-  // Mark as mounted after first client render
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === "undefined") return "system";
+    return readStorage();
+  });
+  const [resolved, setResolved] = useState<"light" | "dark">(() => {
+    if (typeof window === "undefined") return "light";
+    return resolveTheme(readStorage());
+  });
+
+  // On mount: sync the <html> class (defence against SSR mismatch)
   useEffect(() => {
-    setMounted(true);
+    applyThemeClass(resolved);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Apply dark class to <html> whenever theme changes
+  // Whenever theme changes (incl toggle), reapply
   useEffect(() => {
-    const root = document.documentElement;
-    let r: "light" | "dark";
-
-    if (theme === "system") {
-      r = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-    } else {
-      r = theme;
-    }
-
+    const r = resolveTheme(theme);
     setResolved(r);
-    root.classList.toggle("dark", r === "dark");
-    root.classList.toggle("light", r === "light");
-    localStorage.setItem("theme", theme);
+    applyThemeClass(r);
+    try {
+      localStorage.setItem("theme", theme);
+    } catch {}
   }, [theme]);
 
-  // Listen for system changes when in "system" mode
+  // Listen to system preference changes when in system mode
   useEffect(() => {
     if (theme !== "system") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = () => {
-      const r = mq.matches ? "dark" : "light";
+    const handler = (e: MediaQueryListEvent) => {
+      const r = e.matches ? "dark" : "light";
       setResolved(r);
-      document.documentElement.classList.toggle("dark", r === "dark");
-      document.documentElement.classList.toggle("light", r === "light");
+      applyThemeClass(r);
     };
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
   }, [theme]);
 
-  const setTheme = useCallback((t: Theme) => setThemeState(t), []);
+  const setTheme = useCallback((t: Theme) => {
+    setThemeState(t);
+  }, []);
 
   const toggle = useCallback(() => {
     setThemeState((prev) => {
@@ -94,11 +98,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       return "light";
     });
   }, []);
-
-  // Prevent flash — don't render children with wrong theme until mounted
-  if (!mounted) {
-    return <div style={{ visibility: "hidden" }}>{children}</div>;
-  }
 
   return (
     <ThemeContext.Provider value={{ theme, resolved, setTheme, toggle }}>
