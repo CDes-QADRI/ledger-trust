@@ -241,33 +241,36 @@ export default function Home() {
           </section>
         )}
 
-        <section className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">All Expenses</h2>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              Total: {expenseCount?.toString() ?? "0"}
-            </span>
-          </div>
-          {!expenseCount || expenseCount === BigInt(0) ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-              No expenses submitted yet.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {Array.from({ length: Number(expenseCount) }, (_, i) => i + 1).map(
-                (id) => (
-                  <ExpenseRow
-                    key={id}
-                    expenseId={id}
-                    isCommitteeMember={!!isCommitteeMember}
-                    walletAddress={address}
-                    onRefresh={refetchCount}
-                  />
-                )
-              )}
+        {/* ── Expenses: only visible when wallet is connected ── */}
+        {isConnected && (
+          <section className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">All Expenses</h2>
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                Total: {expenseCount?.toString() ?? "0"}
+              </span>
             </div>
-          )}
-        </section>
+            {!expenseCount || expenseCount === BigInt(0) ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                No expenses submitted yet.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {Array.from({ length: Number(expenseCount) }, (_, i) => i + 1).map(
+                  (id) => (
+                    <ExpenseRow
+                      key={id}
+                      expenseId={id}
+                      isCommitteeMember={!!isCommitteeMember}
+                      walletAddress={address}
+                      onRefresh={refetchCount}
+                    />
+                  )
+                )}
+              </div>
+            )}
+          </section>
+        )}
       </main>
     </div>
   );
