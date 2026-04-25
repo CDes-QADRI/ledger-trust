@@ -12,5 +12,19 @@ docs/
 
 # Dotenv file
 .env
-src/ExpenseTrackerSinle.sol
-test/ExpenseTrackerSingle.t.sol
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

@@ -1,6 +1,5 @@
 {
-  "dependencies": {
-    "axios": "^1.15.2",
+  "devDependencies": {
     "browser-image-compression": "^2.0.2"
   }
 }
