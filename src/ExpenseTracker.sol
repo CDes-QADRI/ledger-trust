@@ -37,6 +37,8 @@ contract ExpenseTracker {
     }
 
     function submitExpense(string memory _description, uint256 _amount, string memory _ipfsReceiptHash) public {
+        require(bytes(_description).length > 0, "Description cannot be empty");
+        require(_amount > 0, "Amount must be greater than 0");
         expenseCount++;
         expenses[expenseCount] = Expense({
             description: _description,

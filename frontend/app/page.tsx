@@ -168,7 +168,8 @@ export default function Home() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="e.g. Catering advance payment"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white placeholder:text-gray-400:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                   maxLength={200}
                 />
               </div>
@@ -182,7 +183,8 @@ export default function Home() {
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="e.g. 50000"
                   min="1"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white placeholder:text-gray-400:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                 />
               </div>
               <div>
@@ -194,7 +196,7 @@ export default function Home() {
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
                   onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white file:mr-3 file:border-0 file:bg-blue-50:bg-blue-950 file:text-blue-700:text-blue-300 file:rounded file:px-3 file:py-1 transition-colors"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white file:mr-3 file:border-0 file:bg-blue-50 file:text-blue-700 file:rounded file:px-3 file:py-1 transition-colors"
                 />
               </div>
               {formError && (
@@ -208,7 +210,7 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={uploading || isSubmitting || isConfirming}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300:bg-blue-800 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
               >
                 {uploading
                   ? "Uploading receipt to IPFS..."
@@ -372,9 +374,9 @@ function ExpenseRow({
                 args: [BigInt(expenseId)],
                 chainId: SUPPORTED_CHAIN.id,
               })
-            }
+          }
             disabled={isApproving}
-            className="shrink-0 bg-green-600 hover:bg-green-700 disabled:bg-green-300:bg-green-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+            className="shrink-0 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
           >
             {isApproving ? "Approving..." : "Approve"}
           </button>
