@@ -13,7 +13,16 @@ import {
 import { formatEther } from "viem";
 import { CONTRACT_ABI, CONTRACT_ADDRESS, SUPPORTED_CHAIN } from "../lib/contract";
 import { uploadToIPFS } from "../lib/pinata";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+
+// ─── Constants ───────────────────────────────────────────────────────────────
+const MAX_DESCRIPTION_LENGTH = 200;
+const MIN_AMOUNT = 1;
+const MAX_AMOUNT = 1_000_000_000; // Rs 1 billion cap
+const ALLOWED_FILE_TYPES = [
+  "image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf",
+];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 export default function Home() {
   const { address, isConnected } = useAccount();
@@ -28,6 +37,7 @@ export default function Home() {
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const submittingRef = useRef(false); // guard against double-submit
 
   const isWrongNetwork = isConnected && chainId !== SUPPORTED_CHAIN.id;
 
@@ -36,6 +46,7 @@ export default function Home() {
     abi: CONTRACT_ABI,
     functionName: "expenseCount",
     chainId: SUPPORTED_CHAIN.id,
+    query: { enabled: isConnected },
   });
 
   const { data: isCommitteeMember } = useReadContract({
@@ -62,20 +73,53 @@ export default function Home() {
       refetchCount();
       setFormSuccess(true);
       resetSubmit();
+      submittingRef.current = false;
     }
   }, [isConfirmed, refetchCount, resetSubmit]);
+
+  const sanitizeDescription = useCallback((input: string): string => {
+    return input
+      .replace(/<[^>]*>/g, "")    // strip HTML tags
+      .replace(/[<>"'&]/g, "")    // strip special chars
+      .trim()
+      .slice(0, MAX_DESCRIPTION_LENGTH);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
     setFormSuccess(false);
 
-    if (!description.trim()) return setFormError("Description is required.");
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0)
-      return setFormError("Enter a valid amount in Rs.");
+    // Guard: prevent double-submit
+    if (submittingRef.current) return;
+
+    const sanitizedDesc = sanitizeDescription(description);
+    if (!sanitizedDesc) {
+      return setFormError("Description is required and cannot contain only HTML or special characters.");
+    }
+
+    const parsedAmount = Number(amount);
+    if (!amount || isNaN(parsedAmount) || parsedAmount < MIN_AMOUNT || parsedAmount > MAX_AMOUNT) {
+      return setFormError(`Enter a valid amount (Rs ${MIN_AMOUNT.toLocaleString()} – ${MAX_AMOUNT.toLocaleString()}).`);
+    }
+
     if (!file) return setFormError("Please attach a receipt image or PDF.");
 
+    // Client-side file validation (defence-in-depth)
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      return setFormError("Invalid file type. Only JPEG, PNG, WEBP, GIF, and PDF are allowed.");
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return setFormError("File too large. Maximum allowed size is 5 MB.");
+    }
+
+    // Check if wallet is still connected
+    if (!isConnected || !address) {
+      return setFormError("Wallet disconnected. Please reconnect.");
+    }
+
     try {
+      submittingRef.current = true;
       setUploading(true);
       const ipfsHash = await uploadToIPFS(file);
       setUploading(false);
@@ -84,17 +128,29 @@ export default function Home() {
         address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
         functionName: "submitExpense",
-        args: [description.trim(), BigInt(Math.round(Number(amount))), ipfsHash],
+        args: [
+          sanitizedDesc,
+          BigInt(Math.round(parsedAmount)),
+          ipfsHash,
+        ],
         chainId: SUPPORTED_CHAIN.id,
       });
 
+      // Optimistic clear (reset on success or error)
       setDescription("");
       setAmount("");
       setFile(null);
       if (fileRef.current) fileRef.current.value = "";
     } catch (err: unknown) {
       setUploading(false);
-      setFormError(err instanceof Error ? err.message : "Upload failed.");
+      submittingRef.current = false;
+      const msg = err instanceof Error ? err.message : "Upload failed.";
+      // Don't show raw API errors to end-user if it's a connection issue
+      if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+        setFormError("Network error. Please check your connection and try again.");
+      } else {
+        setFormError(msg);
+      }
     }
   };
 
@@ -166,12 +222,15 @@ export default function Home() {
                 <input
                   type="text"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) => setDescription(sanitizeDescription(e.target.value))}
                   placeholder="e.g. Catering advance payment"
-
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                  maxLength={200}
+                  maxLength={MAX_DESCRIPTION_LENGTH}
+                  autoComplete="off"
                 />
+                <span className="text-xs text-gray-400 mt-1 block text-right">
+                  {description.length}/{MAX_DESCRIPTION_LENGTH}
+                </span>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -182,9 +241,10 @@ export default function Home() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="e.g. 50000"
-                  min="1"
-
+                  min={MIN_AMOUNT}
+                  max={MAX_AMOUNT}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                  autoComplete="off"
                 />
               </div>
               <div>
@@ -200,11 +260,11 @@ export default function Home() {
                 />
               </div>
               {formError && (
-                <p className="text-sm text-red-600">{formError}</p>
+                <p className="text-sm text-red-600" role="alert">{formError}</p>
               )}
               {formSuccess && (
-                <p className="text-sm text-green-600">
-                  Expense submitted successfully on-chain!
+                <p className="text-sm text-green-600" role="status">
+                  ✅ Expense submitted successfully on-chain!
                 </p>
               )}
               <button
@@ -316,7 +376,7 @@ function ExpenseRow({
 
   if (!expense) return null;
 
-  const [description, amount, ipfsReceiptHash, approvals, isSettled] = expense;
+  const [description, rawAmount, ipfsReceiptHash, approvals, isSettled] = expense;
 
   return (
     <div
@@ -332,8 +392,9 @@ function ExpenseRow({
             <span className="font-medium text-gray-900 text-sm">
               #{expenseId}
             </span>
+            {/* Escape HTML entities in description to prevent XSS */}
             <span className="text-gray-800 text-sm">
-              {description}
+              {description.replace(/</g, "&lt;").replace(/>/g, "&gt;")}
             </span>
             <span
               className={`text-xs px-2 py-0.5 rounded-full font-medium ${
@@ -347,7 +408,7 @@ function ExpenseRow({
           </div>
           <div className="mt-1 flex items-center gap-4 flex-wrap">
             <span className="text-sm font-semibold text-gray-700">
-              Rs. {amount.toString()}
+              Rs. {rawAmount.toString()}
             </span>
             <span className="text-xs text-gray-500">
               {approvals.toString()} approval(s)
