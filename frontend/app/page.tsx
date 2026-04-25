@@ -13,7 +13,6 @@ import {
 import { formatEther } from "viem";
 import { CONTRACT_ABI, CONTRACT_ADDRESS, SUPPORTED_CHAIN } from "../lib/contract";
 import { uploadToIPFS } from "../lib/pinata";
-import { useTheme } from "../lib/theme";
 import { useState, useRef, useEffect } from "react";
 
 export default function Home() {
@@ -21,7 +20,6 @@ export default function Home() {
   const chainId = useChainId();
   const { data: ethBalance } = useBalance({ address, chainId: SUPPORTED_CHAIN.id });
   const { switchChain, isPending: isSwitching } = useSwitchChain();
-  const { resolved: themeResolved, toggle: toggleTheme } = useTheme();
 
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -101,12 +99,12 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors">
+    <div className="min-h-screen bg-gray-50 transition-colors">
       {/* ── Network Switch Warning ── */}
       {isWrongNetwork && (
-        <div className="bg-amber-50 dark:bg-amber-950 border-b border-amber-300 dark:border-amber-700 px-4 py-3">
+        <div className="bg-amber-50 border-b border-amber-300 px-4 py-3">
           <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
-            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+            <p className="text-sm font-medium text-amber-800">
               ⚠️ Please switch to Sepolia network to use this dApp.
             </p>
             <button
@@ -120,13 +118,13 @@ export default function Home() {
         </div>
       )}
 
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors">
+      <header className="bg-white border-b border-gray-200 transition-colors">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-xl font-bold text-gray-900">
               Party Expense Tracker
             </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            <p className="text-xs text-gray-500 mt-0.5">
               Blockchain-verified · Zero corruption · Ethereum Sepolia
             </p>
           </div>
@@ -134,21 +132,12 @@ export default function Home() {
           <div className="flex items-center gap-3">
             {/* ── ETH Balance ── */}
             {isConnected && ethBalance && (
-              <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-mono font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-full">
+              <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-mono font-semibold bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full">
                 <span className="w-2 h-2 rounded-full bg-green-400" />
                 {formatEther(ethBalance.value).slice(0, 6)}{" "}
                 {ethBalance.symbol}
               </span>
             )}
-
-            {/* ── Theme Toggle ── */}
-            <button
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-              className="text-sm px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              {themeResolved === "dark" ? "☀️ Light" : "🌙 Dark"}
-            </button>
 
             <ConnectButton showBalance={false} />
           </div>
@@ -157,21 +146,21 @@ export default function Home() {
 
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
         {!isConnected && (
-          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-6 text-center">
-            <p className="text-blue-800 dark:text-blue-200 font-medium">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+            <p className="text-blue-800 font-medium">
               Connect your wallet to submit or view expenses.
             </p>
           </div>
         )}
 
         {isConnected && !isWrongNetwork && (
-          <section className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+          <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 transition-colors">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">
               Submit New Expense
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Description
                 </label>
                 <input
@@ -179,12 +168,12 @@ export default function Home() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="e.g. Catering advance payment"
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white placeholder:text-gray-400:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                   maxLength={200}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Amount (Rs)
                 </label>
                 <input
@@ -193,11 +182,11 @@ export default function Home() {
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="e.g. 50000"
                   min="1"
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white placeholder:text-gray-400:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Receipt (Image / PDF — max 5MB)
                 </label>
                 <input
@@ -205,21 +194,21 @@ export default function Home() {
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
                   onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 file:mr-3 file:border-0 file:bg-blue-50 dark:file:bg-blue-950 file:text-blue-700 dark:file:text-blue-300 file:rounded file:px-3 file:py-1 transition-colors"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white file:mr-3 file:border-0 file:bg-blue-50:bg-blue-950 file:text-blue-700:text-blue-300 file:rounded file:px-3 file:py-1 transition-colors"
                 />
               </div>
               {formError && (
-                <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>
+                <p className="text-sm text-red-600">{formError}</p>
               )}
               {formSuccess && (
-                <p className="text-sm text-green-600 dark:text-green-400">
+                <p className="text-sm text-green-600">
                   Expense submitted successfully on-chain!
                 </p>
               )}
               <button
                 type="submit"
                 disabled={uploading || isSubmitting || isConfirming}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 dark:disabled:bg-blue-800 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300:bg-blue-800 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
               >
                 {uploading
                   ? "Uploading receipt to IPFS..."
@@ -234,8 +223,8 @@ export default function Home() {
         )}
 
         {isConnected && isWrongNetwork && (
-          <section className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 text-center transition-colors">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+          <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center transition-colors">
+            <p className="text-sm text-gray-500">
               Please switch to Sepolia network to submit or approve expenses.
             </p>
           </section>
@@ -243,15 +232,15 @@ export default function Home() {
 
         {/* ── Expenses: only visible when wallet is connected ── */}
         {isConnected && (
-          <section className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors">
+          <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 transition-colors">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">All Expenses</h2>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
+              <h2 className="text-lg font-semibold text-gray-800">All Expenses</h2>
+              <span className="text-sm text-gray-500">
                 Total: {expenseCount?.toString() ?? "0"}
               </span>
             </div>
             {!expenseCount || expenseCount === BigInt(0) ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+              <p className="text-sm text-gray-500 text-center py-8">
                 No expenses submitted yet.
               </p>
             ) : (
@@ -331,34 +320,34 @@ function ExpenseRow({
     <div
       className={`border rounded-lg p-4 transition-colors ${
         isSettled
-          ? "border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950"
-          : "border-gray-200 dark:border-gray-700"
+          ? "border-green-200 bg-green-50"
+          : "border-gray-200"
       }`}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+            <span className="font-medium text-gray-900 text-sm">
               #{expenseId}
             </span>
-            <span className="text-gray-800 dark:text-gray-200 text-sm">
+            <span className="text-gray-800 text-sm">
               {description}
             </span>
             <span
               className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                 isSettled
-                  ? "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
-                  : "bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-yellow-100 text-yellow-700"
               }`}
             >
               {isSettled ? "Settled ✓" : "Pending"}
             </span>
           </div>
           <div className="mt-1 flex items-center gap-4 flex-wrap">
-            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <span className="text-sm font-semibold text-gray-700">
               Rs. {amount.toString()}
             </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-gray-500">
               {approvals.toString()} approval(s)
             </span>
             {ipfsReceiptHash && (
@@ -366,7 +355,7 @@ function ExpenseRow({
                 href={`https://gateway.pinata.cloud/ipfs/${ipfsReceiptHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                className="text-xs text-blue-600 hover:underline"
               >
                 View Receipt ↗
               </a>
@@ -385,13 +374,13 @@ function ExpenseRow({
               })
             }
             disabled={isApproving}
-            className="shrink-0 bg-green-600 hover:bg-green-700 disabled:bg-green-300 dark:disabled:bg-green-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+            className="shrink-0 bg-green-600 hover:bg-green-700 disabled:bg-green-300:bg-green-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
           >
             {isApproving ? "Approving..." : "Approve"}
           </button>
         )}
         {alreadyApproved && !isSettled && (
-          <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500 italic">
+          <span className="shrink-0 text-xs text-gray-400 italic">
             You approved
           </span>
         )}

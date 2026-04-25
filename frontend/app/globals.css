@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
-
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -20,11 +18,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* ── Inputs: fix invisible text in both modes ── */
+/* ── Inputs: fix invisible text ── */
 input[type="text"],
 input[type="number"],
 input[type="file"],
 textarea,
 select {
-  color-scheme: light dark;
+  color-scheme: light;
 }
