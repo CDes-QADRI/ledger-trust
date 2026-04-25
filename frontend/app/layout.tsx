@@ -34,10 +34,11 @@ export default function RootLayout({
               (function() {
                 try {
                   var theme = localStorage.getItem('theme');
+                  var root = document.documentElement;
                   if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                    document.documentElement.classList.add('dark');
+                    root.setAttribute('data-theme', 'dark');
                   } else {
-                    document.documentElement.classList.remove('dark');
+                    root.setAttribute('data-theme', 'light');
                   }
                 } catch(e) {}
               })();

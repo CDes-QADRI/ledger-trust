@@ -27,8 +27,7 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 function applyThemeClass(r: "light" | "dark") {
   const root = document.documentElement;
-  root.classList.remove("light", "dark");
-  root.classList.add(r);
+  root.setAttribute("data-theme", r);
 }
 
 function resolveTheme(theme: Theme): "light" | "dark" {
