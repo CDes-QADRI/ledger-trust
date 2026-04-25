@@ -59,7 +59,7 @@ contract ExpenseTrackerSingleTest is Test {
 
     function testSubmitExpenseEmitsEvent() public {
         vm.expectEmit(true, true, false, true);
-        emit ExpenseTrackerSingle.ExpenseSubmitted(1, address(this), 5000);
+        emit ExpenseTrackerSingle.ExpenseSubmitted(1, address(this), 5000, "QmSound789");
         tracker.submitExpense("Sound System", 5000, "QmSound789");
     }
 

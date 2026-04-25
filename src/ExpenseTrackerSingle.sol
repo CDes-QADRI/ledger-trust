@@ -26,8 +26,17 @@ contract ExpenseTrackerSingle {
 
     uint256 public requiredApprovals;
 
-    event ExpenseSubmitted(uint256 indexed expenseId, address indexed submitter, uint256 amount);
-    event ExpenseApproved(uint256 indexed expenseId, address indexed approver, uint256 approvals);
+    event ExpenseSubmitted(
+        uint256 indexed expenseId,
+        address indexed submitter,
+        uint256 amount,
+        string ipfsReceiptHash
+    );
+    event ExpenseApproved(
+        uint256 indexed expenseId,
+        address indexed approver,
+        uint256 approvals
+    );
     event ExpenseSettled(uint256 indexed expenseId);
 
     /// @param _approver The single wallet address that has approval rights (your own wallet for testing).
@@ -37,9 +46,16 @@ contract ExpenseTrackerSingle {
         requiredApprovals = 1;
     }
 
-    function submitExpense(string memory _description, uint256 _amount, string memory _ipfsReceiptHash) public {
+    /// @notice Submit a new expense. Open to anyone.
+    function submitExpense(
+        string memory _description,
+        uint256 _amount,
+        string memory _ipfsReceiptHash
+    ) public {
         require(bytes(_description).length > 0, "Description cannot be empty");
         require(_amount > 0, "Amount must be greater than 0");
+        require(bytes(_ipfsReceiptHash).length > 0, "Receipt hash required");
+
         expenseCount++;
         expenses[expenseCount] = Expense({
             description: _description,
@@ -49,19 +65,33 @@ contract ExpenseTrackerSingle {
             isSettled: false,
             submitter: msg.sender
         });
-        emit ExpenseSubmitted(expenseCount, msg.sender, _amount);
+
+        emit ExpenseSubmitted(
+            expenseCount,
+            msg.sender,
+            _amount,
+            _ipfsReceiptHash
+        );
     }
 
+    /// @notice Approve an expense. Only the single approver can call.
     function approveExpense(uint256 _expenseId) public {
-        require(isCommitteeMember[msg.sender] == true, "Only committee can approve");
-        require(_expenseId > 0 && _expenseId <= expenseCount, "Invalid expense ID");
+        require(isCommitteeMember[msg.sender], "Only committee can approve");
+        require(
+            _expenseId > 0 && _expenseId <= expenseCount,
+            "Invalid expense ID"
+        );
 
         Expense storage expense = expenses[_expenseId];
-        require(expense.isSettled == false, "Expense already settled");
-        require(hasApproved[_expenseId][msg.sender] == false, "You already approved this");
+        require(!expense.isSettled, "Expense already settled");
+        require(
+            !hasApproved[_expenseId][msg.sender],
+            "Already approved"
+        );
 
         hasApproved[_expenseId][msg.sender] = true;
         expense.approvals++;
+
         emit ExpenseApproved(_expenseId, msg.sender, expense.approvals);
 
         if (expense.approvals >= requiredApprovals) {
