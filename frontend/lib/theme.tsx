@@ -25,16 +25,31 @@ const ThemeContext = createContext<ThemeContextValue>({
   toggle: () => {},
 });
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("system");
-  const [resolved, setResolved] = useState<"light" | "dark">("light");
+function getInitialTheme(): Theme {
+  if (typeof window === "undefined") return "system";
+  const saved = localStorage.getItem("theme") as Theme | null;
+  if (saved === "light" || saved === "dark" || saved === "system") return saved;
+  return "system";
+}
 
-  // Hydrate from localStorage on mount
+function getInitialResolved(): "light" | "dark" {
+  if (typeof window === "undefined") return "light";
+  const saved = localStorage.getItem("theme") as Theme | null;
+  if (saved === "dark") return "dark";
+  if (saved === "light") return "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+  const [resolved, setResolved] = useState<"light" | "dark">(getInitialResolved);
+  const [mounted, setMounted] = useState(false);
+
+  // Mark as mounted after first client render
   useEffect(() => {
-    const saved = localStorage.getItem("theme") as Theme | null;
-    if (saved === "light" || saved === "dark" || saved === "system") {
-      setThemeState(saved);
-    }
+    setMounted(true);
   }, []);
 
   // Apply dark class to <html> whenever theme changes
@@ -79,6 +94,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       return "light";
     });
   }, []);
+
+  // Prevent flash — don't render children with wrong theme until mounted
+  if (!mounted) {
+    return <div style={{ visibility: "hidden" }}>{children}</div>;
+  }
 
   return (
     <ThemeContext.Provider value={{ theme, resolved, setTheme, toggle }}>
