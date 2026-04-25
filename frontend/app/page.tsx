@@ -156,21 +156,21 @@ export default function Home() {
 
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
         {!isConnected && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-            <p className="text-blue-800 font-medium">
+          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-6 text-center">
+            <p className="text-blue-800 dark:text-blue-200 font-medium">
               Connect your wallet to submit or view expenses.
             </p>
           </div>
         )}
 
-        {isConnected && (
-          <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+        {isConnected && !isWrongNetwork && (
+          <section className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
               Submit New Expense
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Description
                 </label>
                 <input
@@ -178,12 +178,12 @@ export default function Home() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="e.g. Catering advance payment"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                   maxLength={200}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Amount (Rs)
                 </label>
                 <input
@@ -192,11 +192,11 @@ export default function Home() {
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="e.g. 50000"
                   min="1"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Receipt (Image / PDF — max 5MB)
                 </label>
                 <input
@@ -204,21 +204,21 @@ export default function Home() {
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
                   onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm file:mr-3 file:border-0 file:bg-blue-50 file:text-blue-700 file:rounded file:px-3 file:py-1"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 file:mr-3 file:border-0 file:bg-blue-50 dark:file:bg-blue-950 file:text-blue-700 dark:file:text-blue-300 file:rounded file:px-3 file:py-1 transition-colors"
                 />
               </div>
               {formError && (
-                <p className="text-sm text-red-600">{formError}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>
               )}
               {formSuccess && (
-                <p className="text-sm text-green-600">
+                <p className="text-sm text-green-600 dark:text-green-400">
                   Expense submitted successfully on-chain!
                 </p>
               )}
               <button
                 type="submit"
                 disabled={uploading || isSubmitting || isConfirming}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 dark:disabled:bg-blue-800 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
               >
                 {uploading
                   ? "Uploading receipt to IPFS..."
@@ -232,15 +232,23 @@ export default function Home() {
           </section>
         )}
 
-        <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        {isConnected && isWrongNetwork && (
+          <section className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 text-center transition-colors">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Please switch to Sepolia network to submit or approve expenses.
+            </p>
+          </section>
+        )}
+
+        <section className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">All Expenses</h2>
-            <span className="text-sm text-gray-500">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">All Expenses</h2>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               Total: {expenseCount?.toString() ?? "0"}
             </span>
           </div>
           {!expenseCount || expenseCount === BigInt(0) ? (
-            <p className="text-sm text-gray-500 text-center py-8">
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
               No expenses submitted yet.
             </p>
           ) : (
@@ -317,30 +325,36 @@ function ExpenseRow({
 
   return (
     <div
-      className={`border rounded-lg p-4 ${
-        isSettled ? "border-green-200 bg-green-50" : "border-gray-200"
+      className={`border rounded-lg p-4 transition-colors ${
+        isSettled
+          ? "border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950"
+          : "border-gray-200 dark:border-gray-700"
       }`}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-gray-900 text-sm">#{expenseId}</span>
-            <span className="text-gray-800 text-sm">{description}</span>
+            <span className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+              #{expenseId}
+            </span>
+            <span className="text-gray-800 dark:text-gray-200 text-sm">
+              {description}
+            </span>
             <span
               className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                 isSettled
-                  ? "bg-green-100 text-green-700"
-                  : "bg-yellow-100 text-yellow-700"
+                  ? "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
+                  : "bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300"
               }`}
             >
               {isSettled ? "Settled ✓" : "Pending"}
             </span>
           </div>
           <div className="mt-1 flex items-center gap-4 flex-wrap">
-            <span className="text-sm font-semibold text-gray-700">
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               Rs. {amount.toString()}
             </span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               {approvals.toString()} approval(s)
             </span>
             {ipfsReceiptHash && (
@@ -348,7 +362,7 @@ function ExpenseRow({
                 href={`https://gateway.pinata.cloud/ipfs/${ipfsReceiptHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-blue-600 hover:underline"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
               >
                 View Receipt ↗
               </a>
@@ -367,13 +381,13 @@ function ExpenseRow({
               })
             }
             disabled={isApproving}
-            className="shrink-0 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+            className="shrink-0 bg-green-600 hover:bg-green-700 disabled:bg-green-300 dark:disabled:bg-green-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
           >
             {isApproving ? "Approving..." : "Approve"}
           </button>
         )}
         {alreadyApproved && !isSettled && (
-          <span className="shrink-0 text-xs text-gray-400 italic">
+          <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500 italic">
             You approved
           </span>
         )}
