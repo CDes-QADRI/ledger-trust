@@ -40,14 +40,8 @@ contract ExpenseTrackerSingleTest is Test {
 
     function testSubmitExpenseStoresCorrectData() public {
         tracker.submitExpense("Decoration", 10000, "QmHash456");
-        (
-            string memory desc,
-            uint256 amount,
-            string memory hash,
-            uint256 approvals,
-            bool isSettled,
-            address submitter
-        ) = tracker.expenses(1);
+        (string memory desc, uint256 amount, string memory hash, uint256 approvals, bool isSettled, address submitter) =
+            tracker.expenses(1);
 
         assertEq(desc, "Decoration");
         assertEq(amount, 10000);

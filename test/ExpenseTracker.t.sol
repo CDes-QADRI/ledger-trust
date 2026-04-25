@@ -87,14 +87,8 @@ contract ExpenseTrackerTest is Test {
         vm.prank(submitter);
         tracker.submitExpense("Catering", 50000, "QmHash456");
 
-        (
-            string memory desc,
-            uint256 amount,
-            string memory hash,
-            uint256 approvals,
-            bool settled,
-            address sub
-        ) = tracker.expenses(1);
+        (string memory desc, uint256 amount, string memory hash, uint256 approvals, bool settled, address sub) =
+            tracker.expenses(1);
 
         assertEq(desc, "Catering");
         assertEq(amount, 50000);

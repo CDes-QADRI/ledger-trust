@@ -26,16 +26,9 @@ contract ExpenseTracker {
     address public immutable owner;
 
     event ExpenseSubmitted(
-        uint256 indexed expenseId,
-        address indexed submitter,
-        uint256 amount,
-        string ipfsReceiptHash
+        uint256 indexed expenseId, address indexed submitter, uint256 amount, string ipfsReceiptHash
     );
-    event ExpenseApproved(
-        uint256 indexed expenseId,
-        address indexed approver,
-        uint256 approvals
-    );
+    event ExpenseApproved(uint256 indexed expenseId, address indexed approver, uint256 approvals);
     event ExpenseSettled(uint256 indexed expenseId);
     event CommitteeMemberAdded(address indexed member);
     event CommitteeMemberRemoved(address indexed member);
@@ -64,11 +57,7 @@ contract ExpenseTracker {
     }
 
     /// @notice Submit a new expense. Open to anyone.
-    function submitExpense(
-        string memory _description,
-        uint256 _amount,
-        string memory _ipfsReceiptHash
-    ) public {
+    function submitExpense(string memory _description, uint256 _amount, string memory _ipfsReceiptHash) public {
         require(bytes(_description).length > 0, "Description cannot be empty");
         require(_amount > 0, "Amount must be greater than 0");
         require(bytes(_ipfsReceiptHash).length > 0, "Receipt hash required");
@@ -83,28 +72,17 @@ contract ExpenseTracker {
             submitter: msg.sender
         });
 
-        emit ExpenseSubmitted(
-            expenseCount,
-            msg.sender,
-            _amount,
-            _ipfsReceiptHash
-        );
+        emit ExpenseSubmitted(expenseCount, msg.sender, _amount, _ipfsReceiptHash);
     }
 
     /// @notice Approve an expense. Only committee members can call.
     /// @dev Uses Checks-Effects-Interactions pattern to prevent reentrancy.
     function approveExpense(uint256 _expenseId) public onlyCommittee {
-        require(
-            _expenseId > 0 && _expenseId <= expenseCount,
-            "Invalid expense ID"
-        );
+        require(_expenseId > 0 && _expenseId <= expenseCount, "Invalid expense ID");
 
         Expense storage expense = expenses[_expenseId];
         require(!expense.isSettled, "Expense already settled");
-        require(
-            !hasApproved[_expenseId][msg.sender],
-            "Already approved"
-        );
+        require(!hasApproved[_expenseId][msg.sender], "Already approved");
 
         // Effects
         hasApproved[_expenseId][msg.sender] = true;
@@ -129,10 +107,7 @@ contract ExpenseTracker {
     /// @notice Remove a committee member (owner only).
     function removeCommitteeMember(address _member) public onlyOwner {
         require(isCommitteeMember[_member], "Not a member");
-        require(
-            _member != owner,
-            "Cannot remove owner from committee"
-        );
+        require(_member != owner, "Cannot remove owner from committee");
         isCommitteeMember[_member] = false;
         emit CommitteeMemberRemoved(_member);
     }
@@ -140,10 +115,7 @@ contract ExpenseTracker {
     /// @notice Update required approval count (owner only).
     /// @dev Must be between 1 and current committee size.
     function setRequiredApprovals(uint256 _required) public onlyOwner {
-        require(
-            _required > 0 && _required <= committeeMembers.length,
-            "Invalid required approvals"
-        );
+        require(_required > 0 && _required <= committeeMembers.length, "Invalid required approvals");
         requiredApprovals = _required;
     }
 
